@@ -9,6 +9,7 @@
 // ============ GLOBALS ============
 const char *server_socket_name = "12345";
 int server_socket_fd = -1;
+constexpr int MAX_BACKLOG = 2;
 
 int main(int argc, char *argv[]) {
 
@@ -41,7 +42,28 @@ int main(int argc, char *argv[]) {
   printf("LOG: Successfully connected to socket %s using fd: %d\n",
          server_socket_name, server_socket_fd);
 
+  int bind_result = 0;
+  if ((bind_result = bind(server_socket_fd, servinfo->ai_addr,
+                          servinfo->ai_addrlen)) == -1) {
+    perror("Binding socket failed: ");
+    exit(1);
+  }
+
+  printf("LOG: Successfully binded to the socket!\n");
+
+  int opt = 1;
+  if (setsockopt(server_socket_fd, SOL_SOCKET, SO_REUSEADDR, &opt,
+                 sizeof(opt)) < 0) {
+    perror("setsockopt SO_REUSEADDR failed\n");
+    exit(1);
+  }
+
   freeaddrinfo(servinfo);
+
+  if (listen(server_socket_fd, MAX_BACKLOG)) {
+    perror("Listen function failed: ");
+    exit(1);
+  }
 
   return 0;
 }
