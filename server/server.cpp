@@ -1,10 +1,10 @@
-#include <cstddef>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
 #include <netdb.h>
 #include <sys/socket.h>
 #include <sys/types.h>
+#include <unistd.h>
 
 // ============ GLOBALS ============
 const char *server_socket_name = "12345";
@@ -60,10 +60,35 @@ int main(int argc, char *argv[]) {
 
   freeaddrinfo(servinfo);
 
+  // TODO: Do Poll
+
   if (listen(server_socket_fd, MAX_BACKLOG)) {
     perror("Listen function failed: ");
     exit(1);
   }
+
+  struct sockaddr_storage client_addr;
+  socklen_t addr_size;
+  const int new_client_fd =
+      accept(server_socket_fd, (struct sockaddr *)&client_addr, &addr_size);
+
+  char msg_buf[512]{0};
+  ssize_t bytes_rw = 0;
+
+  bytes_rw = recv(new_client_fd, msg_buf, sizeof(msg_buf), 0);
+
+  if (bytes_rw < 0) {
+    printf("LOG: Error while receiving message!\n");
+    const char *ack = "nok";
+    send(new_client_fd, ack, strlen(ack), 0);
+  } else {
+    printf("Message: %s\n", msg_buf);
+    const char *ack = "ack";
+    send(new_client_fd, ack, strlen(ack), 0);
+  }
+
+  close(new_client_fd);
+  close(server_socket_fd);
 
   return 0;
 }

@@ -8,3 +8,4 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_FLAGS "-fsanitize=address")
 
 add_executable(server_app server/server.cpp)
+add_executable(client_app client/client.cpp)
